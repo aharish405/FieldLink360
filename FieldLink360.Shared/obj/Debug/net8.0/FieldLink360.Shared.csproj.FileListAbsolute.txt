@@ -1,0 +1,11 @@
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\bin\Debug\net8.0\FieldLink360.Shared.deps.json
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\bin\Debug\net8.0\FieldLink360.Shared.dll
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\bin\Debug\net8.0\FieldLink360.Shared.pdb
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.AssemblyInfoInputs.cache
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.AssemblyInfo.cs
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.csproj.CoreCompileInputs.cache
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.dll
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\refint\FieldLink360.Shared.dll
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.pdb
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\ref\FieldLink360.Shared.dll

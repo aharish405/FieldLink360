@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FieldLink360.Client</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="FieldLink360.Client.styles.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        /* Modern, Stabilized Scanner CSS */
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #qr-canvas {
+            display: none;
+        }
+
+        /* Target HUD Overlay */
+        .scanner-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .scanner-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 120px;
+            border: 3px solid #00ff00;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.8);
+            box-shadow: 0 0 10px 2px rgba(0, 255, 0, 0.5);
+            animation: scan-move 2s ease-in-out infinite;
+        }
+
+        @keyframes scan-move {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        #scanner-video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+    </style>
+
+    <script>
+        let html5QrCode = null;
+        let ocrWorker = null;
+        let isOcrActive = false;
+
+        async function initOcr() {
+            if (!ocrWorker) {
+                ocrWorker = await Tesseract.createWorker('eng');
+                await ocrWorker.setParameters({
+                    tessedit_char_whitelist: '0123456789UH',
+                });
+            }
+        }
+
+        window.ScannerBridge = {
+            startScanner: async (dotNetHelper, containerId, forOcr) => {
+                try {
+                    if (html5QrCode) {
+                        await html5QrCode.stop().catch(() => {});
+                    }
+
+                    const formats = [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E,
+                        Html5QrcodeSupportedFormats.ITF
+                    ];
+                    
+                    const config = { 
+                        fps: 20, 
+                        qrbox: { width: 300, height: 120 },
+                        aspectRatio: 1.0
+                    };
+                    
+                    html5QrCode = new Html5Qrcode(containerId, { formatsToSupport: formats });
+
+                    const onScanSuccess = async (decodedText) => {
+                        if (!forOcr) {
+                            await dotNetHelper.invokeMethodAsync('OnScanResult', decodedText);
+                            window.ScannerBridge.stopScanner();
+                        }
+                    };
+
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        onScanSuccess
+                    );
+
+                    if (forOcr) {
+                        await initOcr();
+                        isOcrActive = true;
+                        window.ScannerBridge.runOcrLoop(dotNetHelper);
+                    }
+                    return true;
+                } catch (err) {
+                    console.error("Scanner failed:", err);
+                    return false;
+                }
+            },
+
+            runOcrLoop: async (dotNetHelper) => {
+                if (!isOcrActive || !html5QrCode) return;
+
+                const video = document.querySelector('video');
+                if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Crop the center (matching HUD box)
+                    const cropWidth = canvas.width * 0.8;
+                    const cropHeight = 150 * (canvas.height / 350); // Scale factor
+                    const startX = (canvas.width - cropWidth) / 2;
+                    const startY = (canvas.height - cropHeight) / 2;
+
+                    ctx.drawImage(video, startX, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                    
+                    const { data: { text } } = await ocrWorker.recognize(canvas);
+                    
+                    // Specific logic for ICCID: 
+                    // 1. Remove all noise except digits and 'U'
+                    // 2. ICCIDs typically start with 89
+                    // 3. User SIM cards end with 'U H1', valid ICCID is exactly 19 digits
+                    const rawText = text.toUpperCase().replace(/[^0-9U]/g, '');
+                    const match = rawText.match(/89\d{17}/); // Match 89 + next 17 digits (Total 19)
+                    
+                    if (match) {
+                        const iccid = match[0];
+                        console.log("ICCID Captured:", iccid);
+                        const stop = await dotNetHelper.invokeMethodAsync('OnIccidDetected', iccid);
+                        if (stop) {
+                            window.ScannerBridge.stopScanner();
+                            return;
+                        }
+                    }
+                }
+                setTimeout(() => window.ScannerBridge.runOcrLoop(dotNetHelper), 800);
+            },
+
+            stopScanner: async () => {
+                isOcrActive = false;
+                if (html5QrCode) {
+                    await html5QrCode.stop().catch(() => {});
+                    html5QrCode = null;
+                }
+            }
+        };
+    </script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
+</body>
+
+</html>

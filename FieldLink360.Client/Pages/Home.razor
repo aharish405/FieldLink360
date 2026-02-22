@@ -1,0 +1,81 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-12">
+    <MudGrid>
+        <MudItem xs="12" Class="text-center mb-10">
+            <MudText Typo="Typo.h2" Color="Color.Primary" Style="font-weight: 700;">FieldLink 360</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Secondary" Class="mt-2">Enterprise Device Provisioning & Asset Tracking</MudText>
+            <MudDivider Class="my-6" Style="width: 200px; margin: 0 auto; height: 3px; background-color: var(--mud-palette-primary);" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="4" Class="pa-4 hover-card" Style="height: 100%; border-radius: 16px;">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled"><MudIcon Icon="@Icons.Material.Filled.QrCodeScanner" /></MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Smart Scanner</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">Rapidly onboard devices using high-performance barcode scanning for IMEI and Live OCR for SIM ICCID detection.</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" href="/scanner">Go to Scanner</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="4" Class="pa-4 hover-card" Style="height: 100%; border-radius: 16px;">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary" Variant="Variant.Filled"><MudIcon Icon="@Icons.Material.Filled.Storage" /></MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">SIM Inventory</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">Maintain and search your SIM assets with instant cross-reference between ICCID, Mobile Numbers, and IMSI data.</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" href="/inventory">Browse Inventory</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="4" Class="pa-4 hover-card" Style="height: 100%; border-radius: 16px;">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Info" Variant="Variant.Filled"><MudIcon Icon="@Icons.Material.Filled.Stream" /></MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Wialon Integration</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">Seamlessly sync provisioned devices to the Wialon platform with zero manual data entry errors.</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Disabled="true">View Connected Units</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" Class="mt-12">
+            <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Elevation="1">
+                <MudText Typo="Typo.body1"><b>Getting Started:</b> Tap on the "Scan Device" module in the sidebar to begin onboarding your first unit. Ensure you have the SIM card ready for live OCR scanning.</MudText>
+            </MudAlert>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .hover-card { transition: transform 0.2s; }
+    .hover-card:hover { transform: translateY(-8px); cursor: pointer; border: 1px solid var(--mud-palette-primary); }
+</style>

@@ -1,0 +1,139 @@
+@page "/inventory"
+@using FieldLink360.Shared
+@using FieldLink360.Client.Services
+@inject WialonIntegrationService WialonService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">SIM Inventory Search</MudText>
+    <MudText Typo="Typo.body1" Class="mb-6">Search for SIM ICCID or Mobile Number to find cross-references.</MudText>
+
+    <MudPaper Class="pa-4 mb-6" Elevation="4" Style="border-radius: 16px;">
+        <MudTextField @bind-Value="_searchQuery" 
+                      Label="Search (Full or Last 4-6 Digits)" 
+                      Variant="Variant.Outlined" 
+                      Adornment="Adornment.End" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      OnAdornmentClick="PerformSearch" 
+                      OnKeyDown="HandleKeyDown"
+                      Immediate="true"
+                      Placeholder="Search by ICCID last digits (e.g. 7770) or Mobile" />
+        
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   FullWidth="true" 
+                   Class="mt-4" 
+                   OnClick="PerformSearch" 
+                   Disabled="_isSearching">
+            @if (_isSearching)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">Searching...</MudText>
+            }
+            else
+            {
+                <MudText>Search Inventory</MudText>
+            }
+        </MudButton>
+    </MudPaper>
+
+    @if (_results != null)
+    {
+        @if (_results.Any())
+        {
+            <MudDataGrid Items="@_results" Hover="true" Elevation="4" Style="border-radius: 16px;" Class="mt-4" Bordered="false" Striped="true">
+                <Columns>
+                    <PropertyColumn Property="x => x.MobileNumber" Title="Mobile Number">
+                        <CellTemplate>
+                            <div class="d-flex align-center justify-space-between">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mr-2" Color="Color.Primary" />
+                                    <MudText Typo="Typo.body1"><b>@context.Item.MobileNumber</b></MudText>
+                                </div>
+                                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyToClipboard(context.Item.MobileNumber, "Mobile Number"))" />
+                            </div>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SimNo" Title="ICCID (SIM No)">
+                        <CellTemplate>
+                            <div class="d-flex align-center justify-space-between">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.SimCard" Size="Size.Small" Class="mr-2" Color="Color.Secondary" />
+                                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@context.Item.SimNo</MudText>
+                                </div>
+                                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyToClipboard(context.Item.SimNo, "ICCID"))" />
+                            </div>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SimImsi" Title="IMSI">
+                        <CellTemplate>
+                            <div class="d-flex align-center justify-space-between">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Fingerprint" Size="Size.Small" Class="mr-2" Color="Color.Info" />
+                                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@context.Item.SimImsi</MudText>
+                                </div>
+                                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyToClipboard(context.Item.SimImsi, "IMSI"))" />
+                            </div>
+                        </CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+            </MudDataGrid>
+        }
+        else if (!_isSearching)
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-4" Variant="Variant.Filled">No matches found for "@_searchQuery".</MudAlert>
+        }
+    }
+</MudContainer>
+
+@inject IJSRuntime JS
+
+@code {
+    private string _searchQuery = "";
+    private List<SimInventoryItem>? _results;
+    private bool _isSearching = false;
+
+    private async Task CopyToClipboard(string text, string label)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        Snackbar.Add($"{label} copied to clipboard!", Severity.Info);
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            Snackbar.Add("Please enter a search term.", Severity.Warning);
+            return;
+        }
+
+        _isSearching = true;
+        StateHasChanged();
+
+        try 
+        {
+            _results = await WialonService.SearchInventoryItems(_searchQuery);
+            if (!_results.Any())
+            {
+                Snackbar.Add("No results found.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error searching inventory: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await PerformSearch();
+        }
+    }
+}

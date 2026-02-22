@@ -1,0 +1,236 @@
+@page "/scanner"
+@implements IDisposable
+@inject ISnackbar Snackbar
+@inject WialonIntegrationService WialonService
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-0 mt-md-4 px-2 px-md-4">
+    <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4 mb-md-6 mt-4">Scan Device</MudText>
+
+    @if (_isScanning)
+    {
+        <MudCard @key="@("scanner-active")" Class="mb-6 shadow-2xl" Elevation="0" Style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #111;">
+            <MudCardContent Class="pa-0" Style="position: relative;">
+                <div class="scanner-container" id="reader" style="min-height: 350px; background: #000;">
+                    <!-- Video feed renders here via JS -->
+                    
+                    <!-- Smart HUD Overlay -->
+                    <div class="scanner-hud">
+                        <div class="scanner-box" style="border-width: 4px; border-color: @(_isMatchFound ? "#00c853" : "#00ff00"); width: 85%; height: 180px;">
+                             <div style="position: absolute; top: -50px; left: 0; width: 100%; text-align: center;">
+                                 <div class="px-4 py-2" style="background: #00c853; color: white; border-radius: 99px; display: inline-block; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem;">
+                                     @(_workflowStep == WorkflowStep.IMEI ? "Scan IMEI Barcode" : "Align SIM Numbers")
+                                 </div>
+                             </div>
+                             @if (!_isMatchFound)
+                             {
+                                <div class="scan-line"></div>
+                             }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pa-4 text-center" style="background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
+                     @if (_workflowStep == WorkflowStep.SIM)
+                     {
+                        <div class="d-flex align-center justify-center">
+                            <MudProgressCircular Color="Color.Info" Size="Size.Small" Indeterminate="true" Class="mr-3" />
+                            <MudText Typo="Typo.h6" Style="color: #03a9f4; font-weight: bold; font-size: 1rem;">LIVE OCR ACTIVE</MudText>
+                        </div>
+                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Keep camera steady and focused on the ICCID numbers.</MudText>
+                     }
+                     else
+                     {
+                        <MudText Typo="Typo.h6" Style="color: #00c853; font-weight: bold; font-size: 1rem;">WAITING FOR BARCODE...</MudText>
+                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Center the IMEI barcode within the green frame.</MudText>
+                     }
+                </div>
+            </MudCardContent>
+            <MudCardActions Class="justify-space-between pa-4 pa-md-6" Style="background: #1a1a1a;">
+                <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Close" 
+                           OnClick="StopScan" Size="Size.Medium" Style="border-radius: 12px; min-width: 100px;">Cancel</MudButton>
+                
+                <MudButton Variant="Variant.Outlined" Color="Color.Surface" EndIcon="@Icons.Material.Filled.Edit" 
+                           OnClick="@(() => _isScanning = false)" Size="Size.Medium" Style="border-radius: 12px; min-width: 100px;">Manual Entry</MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 pa-md-8 shadow-xl" Elevation="0" Style="border-radius: 20px; border: 1px solid var(--mud-palette-divider);">
+                    <div class="d-flex align-center mb-6">
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium" Class="mr-3 mr-md-4"><MudIcon Icon="@Icons.Material.Filled.SettingsInputAntenna" /></MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h5" Style="font-weight: 800; color: var(--mud-palette-text-primary); font-size: 1.25rem;">Configure Unit</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Style="font-size: 0.85rem;">Step @_currentStepNum of 3: @_workflowStep</MudText>
+                        </div>
+                    </div>
+                    
+                    <MudProgressLinear Color="Color.Primary" Value="@_progressValue" Class="mb-6 mb-md-8" Size="Size.Large" Style="height: 10px; border-radius: 5px;" />
+                    
+                    <MudGrid Spacing="2" SpacingMd="4">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.IMEI" Label="IMEI Number" HelperText="Tap scanner to scan barcode" 
+                                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.QrCodeScanner" AdornmentColor="Color.Primary"
+                                OnAdornmentClick="@(() => StartScan(WorkflowStep.IMEI))" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Value="_model.SimICCID" ValueChanged="OnIccidFieldChanged" Label="SIM ICCID" HelperText="Tap camera for live OCR" 
+                                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CameraAlt" AdornmentColor="Color.Secondary"
+                                OnAdornmentClick="@(() => StartScan(WorkflowStep.SIM))" Variant="Variant.Outlined" Immediate="true" Margin="Margin.Dense" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.PhoneNumber" Label="Mobile Number" Variant="Variant.Outlined" 
+                                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Phone" Placeholder="+..." Margin="Margin.Dense" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudSelect @bind-Value="_model.DeviceModel" Label="Device Model" Variant="Variant.Outlined" 
+                                Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Router" Margin="Margin.Dense">
+                                @foreach (DeviceModel item in Enum.GetValues(typeof(DeviceModel)))
+                                {
+                                    <MudSelectItem Value="@item">@item</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" Class="mt-4 mt-md-6">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large" 
+                                Class="py-3 py-md-5 shadow-lg" Style="font-weight: 900; font-size: 1.1rem; border-radius: 12px; background-color: #1a237e;"
+                                OnClick="Onboard" Disabled="@(!IsFormValid)">START ONBOARDING</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private DeviceOnboardingModel _model = new();
+    private bool _isScanning = false;
+    private bool _isMatchFound = false;
+    private WorkflowStep _workflowStep = WorkflowStep.IMEI;
+    private DotNetObjectReference<Scanner>? _objRef;
+    private int _scanAttempts = 0;
+
+    private enum WorkflowStep { IMEI, SIM, Complete }
+
+    private int _currentStepNum => _workflowStep switch {
+        WorkflowStep.IMEI => 1,
+        WorkflowStep.SIM => 2,
+        WorkflowStep.Complete => 3,
+        _ => 1
+    };
+
+    private int _progressValue => _workflowStep switch {
+        WorkflowStep.IMEI => 33,
+        WorkflowStep.SIM => 66,
+        WorkflowStep.Complete => 100,
+        _ => 0
+    };
+
+    private bool IsFormValid => !string.IsNullOrEmpty(_model.IMEI) && !string.IsNullOrEmpty(_model.SimICCID);
+
+    private async Task StartScan(WorkflowStep step)
+    {
+        _workflowStep = step;
+        _isScanning = true;
+        _scanAttempts = 0;
+        _isMatchFound = false;
+        
+        _objRef = DotNetObjectReference.Create(this);
+        await Task.Delay(400); // UI breathing room
+        
+        bool forOcr = (step == WorkflowStep.SIM);
+        await JS.InvokeVoidAsync("ScannerBridge.startScanner", _objRef, "reader", forOcr);
+    }
+
+    private async Task StopScan()
+    {
+        _isScanning = false;
+        await JS.InvokeVoidAsync("ScannerBridge.stopScanner");
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnScanResult(string result)
+    {
+        if (!_isScanning || _workflowStep != WorkflowStep.IMEI) return;
+
+        _model.IMEI = result;
+        _isScanning = false;
+        _workflowStep = WorkflowStep.SIM;
+        StateHasChanged();
+        Snackbar.Add($"IMEI Logged: {result}", Severity.Success);
+    }
+
+    [JSInvokable]
+    public async Task<bool> OnIccidDetected(string iccid)
+    {
+        if (!_isScanning) return false;
+        _scanAttempts++;
+
+        var inventoryInfo = await WialonService.GetSimInventoryInfo(iccid);
+        if (inventoryInfo != null)
+        {
+            _isMatchFound = true;
+            _model.SimICCID = iccid;
+            _model.PhoneNumber = inventoryInfo.MobileNumber;
+            _workflowStep = WorkflowStep.Complete;
+            _isScanning = false;
+            
+            Snackbar.Add($"SIM Verified: {inventoryInfo.MobileNumber}", Severity.Success);
+            
+            _ = StopScan();
+            StateHasChanged();
+            return true;
+        }
+        else
+        {
+            if (_scanAttempts >= 3)
+            {
+                _model.SimICCID = iccid;
+                _workflowStep = WorkflowStep.Complete;
+                _isScanning = false;
+                Snackbar.Add("ICCID not in inventory. Manual verification required.", Severity.Warning);
+                _ = StopScan();
+                StateHasChanged();
+                return true;
+            }
+
+            Snackbar.Add($"Attempt {_scanAttempts}/3: SIM {iccid} unknown.", Severity.Info);
+            return false;
+        }
+    }
+
+    private async Task OnIccidFieldChanged(string iccid)
+    {
+        _model.SimICCID = iccid;
+        if (!string.IsNullOrEmpty(iccid) && iccid.Length >= 18)
+        {
+            var info = await WialonService.GetSimInventoryInfo(iccid);
+            if (info != null) _model.PhoneNumber = info.MobileNumber;
+        }
+    }
+
+    private async Task Onboard()
+    {
+        var success = await WialonService.OnboardToWialon(_model);
+        if (success)
+        {
+            Snackbar.Add("SUCCESS: Device linked to Wialon.", Severity.Success);
+            _model = new DeviceOnboardingModel();
+            _workflowStep = WorkflowStep.IMEI;
+        }
+    }
+
+    public void Dispose()
+    {
+        _objRef?.Dispose();
+    }
+}
