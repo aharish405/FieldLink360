@@ -1,0 +1,189 @@
+@page "/wialon/account-creation"
+@inject FieldLink360.Client.Services.WialonIntegrationService WialonService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <div class="d-flex align-center justify-space-between mb-8">
+        <div>
+            <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 800;">ACCOUNT WIZARD</MudText>
+            <MudText Typo="Typo.caption" Style="opacity: 0.6;">Follow the steps to provision a complete Wialon account</MudText>
+        </div>
+        <WialonAuthStatus OnStatusChanged="OnAuthChanged" />
+    </div>
+
+    @if (string.IsNullOrEmpty(WialonService.UserToken))
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
+            Authorization required to use the account wizard.
+        </MudAlert>
+    }
+
+    <MudCard Elevation="4" Class="pa-0" Style="border-radius: 16px; overflow: hidden;">
+        <div class="pa-4 d-flex justify-space-around" style="background: var(--mud-palette-background-grey); border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <div class="d-flex flex-column align-center" style="opacity: @(_currentStep == 1 ? "1" : "0.4")">
+                <MudAvatar Color="@(_currentStep >= 1 ? Color.Primary : Color.Default)" Size="Size.Small">1</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Details</MudText>
+            </div>
+            <div class="d-flex flex-column align-center" style="opacity: @(_currentStep == 2 ? "1" : "0.4")">
+                <MudAvatar Color="@(_currentStep >= 2 ? Color.Primary : Color.Default)" Size="Size.Small">2</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Admin User</MudText>
+            </div>
+            <div class="d-flex flex-column align-center" style="opacity: @(_currentStep == 3 ? "1" : "0.4")">
+                <MudAvatar Color="@(_currentStep >= 3 ? Color.Primary : Color.Default)" Size="Size.Small">3</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Review</MudText>
+            </div>
+        </div>
+
+        <MudCardContent Class="pa-8">
+            @if (_currentStep == 1)
+            {
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_accountName" Label="Account / Resource Name" 
+                            Variant="Variant.Outlined" FullWidth HelperText="Min 4 characters" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudSelect T="string" @bind-Value="_selectedPlan" Label="Billing Plan" Variant="Variant.Outlined"
+                            HelperText="Select the service package for this account">
+                            @foreach (var plan in _billingPlans)
+                            {
+                                <MudSelectItem Value="@plan">@plan</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+            }
+            else if (_currentStep == 2)
+            {
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_adminUser" Label="Admin Username" 
+                            Variant="Variant.Outlined" FullWidth />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_adminPass" Label="Admin Password" 
+                            InputType="InputType.Password" Variant="Variant.Outlined" FullWidth />
+                    </MudItem>
+                </MudGrid>
+            }
+            else if (_currentStep == 3)
+            {
+                <div class="d-flex flex-column gap-4 pa-4 bg-light rounded-lg" style="background: rgba(0,0,0,0.02)">
+                    <MudText Typo="Typo.h6">Summary</MudText>
+                    <MudDivider />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.body2" Color="Color.Surface">Account Name:</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_accountName</MudText>
+                    </div>
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.body2" Color="Color.Surface">Billing Plan:</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_selectedPlan</MudText>
+                    </div>
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.body2" Color="Color.Surface">Admin User:</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_adminUser</MudText>
+                    </div>
+                </div>
+            }
+        </MudCardContent>
+
+        <MudCardActions Class="pa-8 pt-0 d-flex justify-space-between">
+            <MudButton Variant="Variant.Text" OnClick="Prev" Disabled="@(_currentStep == 1 || _isProcessing)">BACK</MudButton>
+            @if (_currentStep < 3)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Next" 
+                           Disabled="@(!IsStepValid() || _isProcessing)" Style="border-radius: 8px; min-width: 120px;">
+                    NEXT
+                </MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Finish" 
+                           Disabled="@(_isProcessing || string.IsNullOrEmpty(WialonService.UserToken))" 
+                           Style="border-radius: 8px; min-width: 150px;">
+                    @(_isProcessing ? "PROCESSING..." : "CREATE ACCOUNT")
+                </MudButton>
+            }
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private int _currentStep = 1;
+    private bool _isProcessing = false;
+    
+    // Step 1
+    private string _accountName = string.Empty;
+    private string _selectedPlan = "Standard";
+    private List<string> _billingPlans = new() { "Standard", "Basic", "Advanced", "Enterprise" };
+
+    // Step 2
+    private string _adminUser = string.Empty;
+    private string _adminPass = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(WialonService.UserToken))
+        {
+            await LoadPlans();
+        }
+    }
+
+    private async Task OnAuthChanged()
+    {
+        if (!string.IsNullOrEmpty(WialonService.UserToken))
+        {
+            await LoadPlans();
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadPlans()
+    {
+        var plans = await WialonService.GetBillingPlans();
+        if (plans.Any())
+        {
+            _billingPlans = plans;
+            _selectedPlan = _billingPlans.First();
+        }
+    }
+
+    private bool IsStepValid()
+    {
+        if (_currentStep == 1) return _accountName.Length >= 4 && !string.IsNullOrEmpty(_selectedPlan);
+        if (_currentStep == 2) return !string.IsNullOrEmpty(_adminUser) && !string.IsNullOrEmpty(_adminPass);
+        return true;
+    }
+
+    private void Next() => _currentStep++;
+    private void Prev() => _currentStep--;
+
+    private async Task Finish()
+    {
+        _isProcessing = true;
+        try
+        {
+            var success = await WialonService.RunAccountWizard(_accountName, _selectedPlan, _adminUser, _adminPass);
+            if (success)
+            {
+                Snackbar.Add("Account wizard completed successfully!", Severity.Success);
+                _currentStep = 1;
+                _accountName = "";
+                _adminUser = "";
+                _adminPass = "";
+            }
+            else
+            {
+                Snackbar.Add("Wizard failed. Please check your permissions and parameters.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}

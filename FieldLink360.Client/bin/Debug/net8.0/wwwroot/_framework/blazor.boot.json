@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "FieldLink360.Client",
   "resources": {
-    "hash": "sha256-Ee98QZbb8vDDdDjZErpehwL8Pfl8mdaOYH5GmdjDPFs=",
+    "hash": "sha256-gf+wtKkesq3yutTsrQ1c3jaKhBihXMB86+ZTGgt4yN0=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-O/NCYcAN9uPocD7ns7AzF/cqx7f5vL1PTJCQs0vEXyk="
     },
@@ -212,12 +212,12 @@
       "mscorlib.wasm": "sha256-RLW/7NVuhoPfq151II3kX2kWHgBwQgpCw9aemQNg3to=",
       "netstandard.wasm": "sha256-lAg5WvTiA8wbsIwlr51xh0YWpXT9F5EX3Cnv+11O/mU=",
       "System.Private.CoreLib.wasm": "sha256-3O3muuRQwoLRecYRjfIFWUURvTjP4EmD2O8wYg2UDNY=",
-      "FieldLink360.Shared.wasm": "sha256-QMj8Xe+IlCmhXK2OhP0NFdq6iAK6lCsz5gQ1AZxPbpE=",
-      "FieldLink360.Client.wasm": "sha256-xRBMGxJp8j2aMIochF6GMTv9B2gZt0RN+SX8mDRki94="
+      "FieldLink360.Shared.wasm": "sha256-H8V2Xo7yRtpqDzXtTSxPD5qbbYurijRQPfbIwyTtvg8=",
+      "FieldLink360.Client.wasm": "sha256-wVAHz2MF6i4v6TmKyqewhuNozXezH9XrdaP9fMSJ4iU="
     },
     "pdb": {
-      "FieldLink360.Shared.pdb": "sha256-kqfeA/0j5eiy1Q6g0JfBi85+nzTSr4caft2utpB6AYY=",
-      "FieldLink360.Client.pdb": "sha256-gzNFExsZek4P+xMbSTd5QE2IQucqpCRsrnKY5zG4bwM="
+      "FieldLink360.Shared.pdb": "sha256-gN9Wz7G4DX7H/8MjKFN2jwtDr/WV+DY24nUrF85C5Mc=",
+      "FieldLink360.Client.pdb": "sha256-J2ti2u+GP/ao/ozCFI5oNgr2Vdc+dZ4ICnkkjFHHzz0="
     }
   },
   "cacheBootResources": true,

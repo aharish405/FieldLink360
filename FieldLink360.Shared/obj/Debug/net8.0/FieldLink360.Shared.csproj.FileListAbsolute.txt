@@ -9,3 +9,4 @@ C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLin
 C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\refint\FieldLink360.Shared.dll
 C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.pdb
 C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\ref\FieldLink360.Shared.dll
+C:\Users\ahari\source\FieldLink360\FieldLink360.Shared\obj\Debug\net8.0\FieldLink360.Shared.sourcelink.json

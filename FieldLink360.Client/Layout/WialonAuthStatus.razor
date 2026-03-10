@@ -1,0 +1,55 @@
+@inject FieldLink360.Client.Services.WialonIntegrationService WialonService
+@inject IJSRuntime JS
+@inject IConfiguration Config
+@inject ISnackbar Snackbar
+
+<div class="d-flex align-center gap-4">
+    @if (string.IsNullOrEmpty(WialonService.UserToken))
+    {
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.VpnKey" 
+            OnClick="Login" Style="border-radius: 12px; font-weight: 700;">
+            AUTHORIZE WIALON
+        </MudButton>
+    }
+    else
+    {
+        <div class="d-flex align-center gap-2">
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.CheckCircle">Wialon Authorized</MudChip>
+            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Error" Size="Size.Small" OnClick="Logout" Title="Clear authorization" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnStatusChanged { get; set; }
+
+    private async Task Login()
+    {
+        try 
+        {
+            var host = Config["Wialon:Host"] ?? "hst-api.wialon.com";
+            var token = await JS.InvokeAsync<string>("WialonAuth.login", host, "FieldLink360");
+            if (!string.IsNullOrEmpty(token))
+            {
+                await WialonService.SetUserToken(token);
+                Snackbar.Add("Wialon authorized successfully!", Severity.Success);
+                await OnStatusChanged.InvokeAsync();
+            }
+        }
+        catch (Exception ex) when (ex.Message.Contains("Dismissed"))
+        {
+            Snackbar.Add("Login cancelled.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Login failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Logout()
+    {
+        await WialonService.ClearUserToken();
+        Snackbar.Add("Wialon session cleared.", Severity.Info);
+        await OnStatusChanged.InvokeAsync();
+    }
+}

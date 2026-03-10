@@ -2,4 +2,10 @@
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
     <MudNavLink Href="/scanner" Icon="@Icons.Material.Filled.QrCodeScanner">Scan Device</MudNavLink>
     <MudNavLink Href="/inventory" Icon="@Icons.Material.Filled.Storage">SIM Inventory</MudNavLink>
+    <MudNavGroup Title="WIALON TOOLS" Icon="@Icons.Material.Filled.Router" Expanded="true">
+        <MudNavLink Href="/units" Icon="@Icons.Material.Filled.Router">Wialon Units</MudNavLink>
+        <MudNavLink Href="/wialon/unit-search" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Search">Unit Search</MudNavLink>
+        <MudNavLink Href="/wialon/unit-creation" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AddBox">Provision Unit</MudNavLink>
+        <MudNavLink Href="/wialon/account-creation" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.GroupAdd">Create Account</MudNavLink>
+    </MudNavGroup>
 </MudNavMenu>

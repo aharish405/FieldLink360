@@ -71,3 +71,5 @@ C:\Users\ahari\source\FieldLink360\FieldLink360.Server\obj\Debug\net8.0\refint\F
 C:\Users\ahari\source\FieldLink360\FieldLink360.Server\obj\Debug\net8.0\FieldLink360.Server.pdb
 C:\Users\ahari\source\FieldLink360\FieldLink360.Server\obj\Debug\net8.0\FieldLink360.Server.genruntimeconfig.cache
 C:\Users\ahari\source\FieldLink360\FieldLink360.Server\obj\Debug\net8.0\ref\FieldLink360.Server.dll
+C:\Users\ahari\source\FieldLink360\FieldLink360.Server\obj\Debug\net8.0\FieldLink360.Server.sourcelink.json
+C:\Users\ahari\source\FieldLink360\FieldLink360.Server\bin\Debug\net8.0\Data\api.json

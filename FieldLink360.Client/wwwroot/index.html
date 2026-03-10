@@ -212,6 +212,54 @@
                     await html5QrCode.stop().catch(() => {});
                     html5QrCode = null;
                 }
+            },
+            initAuthListener: (dotNetRef) => {
+                window.addEventListener("message", (event) => {
+                    if (event.origin !== window.location.origin) return;
+                    if (event.data && event.data.type === "WIALON_TOKEN") {
+                        dotNetRef.invokeMethodAsync('OnTokenReceived', event.data.token);
+                    }
+                });
+            }
+        };
+
+        window.WialonAuth = {
+            getAuthUrl: (host, clientId) => {
+                const redirectUri = window.location.origin + "/wialon-callback.html";
+                const authHost = host.includes("hst-api") ? "hosting.wialon.com" : host;
+                return `https://${authHost}/login.html?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&access_type=-1&duration=0`;
+            },
+            login: (host, clientId) => {
+                return new Promise((resolve, reject) => {
+                    const url = window.WialonAuth.getAuthUrl(host, clientId);
+                    
+                    const width = 500, height = 600;
+                    const left = (window.screen.width / 2) - (width / 2);
+                    const top = (window.screen.height / 2) - (height / 2);
+                    
+                    const popup = window.open(url, "WialonLogin", `width=${width},height=${height},top=${top},left=${left}`);
+                    
+                    const messageListener = (event) => {
+                        if (event.origin !== window.location.origin) return;
+                        if (event.data && event.data.type === "WIALON_TOKEN") {
+                            window.removeEventListener("message", messageListener);
+                            if (popup) popup.close();
+                            resolve(event.data.token);
+                        }
+                    };
+                    
+                    window.addEventListener("message", messageListener);
+                    
+                    if (popup) {
+                        const checkClosed = setInterval(() => {
+                            if (popup.closed) {
+                                clearInterval(checkClosed);
+                                window.removeEventListener("message", messageListener);
+                                reject("Dismissed");
+                            }
+                        }, 1000);
+                    }
+                });
             }
         };
     </script>

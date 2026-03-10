@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wialon Auth Callback</title>
+    <style>
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: transparent; color: #00c853; }
+        .loader { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #00c853; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .container { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <div style="font-weight: bold;">Finalizing...</div>
+    </div>
+    <script>
+        (function() {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const queryParams = new URLSearchParams(window.location.search);
+            const token = hashParams.get("access_token") || queryParams.get("access_token");
+            
+            if (token) {
+                // Try parent (iframe) or opener (popup)
+                const target = window.opener || window.parent;
+                if (target && target !== window) {
+                    target.postMessage({ type: "WIALON_TOKEN", token: token }, window.location.origin);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

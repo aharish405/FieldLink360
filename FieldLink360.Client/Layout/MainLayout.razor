@@ -22,8 +22,18 @@
     </MudMainContent>
 </MudLayout>
 
+@inject WialonIntegrationService WialonService
+
 @code {
     private bool _drawerOpen = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await WialonService.InitializeAsync();
+        }
+    }
 
     private void DrawerToggle()
     {

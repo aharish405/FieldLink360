@@ -1,6 +1,25 @@
+using Microsoft.AspNetCore.ResponseCompression;
+using FieldLink360.Server.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// Register Wialon Service
+builder.Services.AddHttpClient<WialonService>();
+builder.Services.AddScoped<WialonService>();
+
+// Add Cors
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -10,77 +29,87 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseWebAssemblyDebugging();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
-
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
+app.UseRouting();
+app.UseCors("AllowAll");
 
+app.MapRazorPages();
+app.MapControllers();
 app.MapFallbackToFile("index.html");
 
-app.MapGet("/api/inventory/lookup/{iccid}", (string iccid) =>
+// Wialon APIs
+app.MapGet("/api/wialon/units", async (string query, string? token, WialonService wialon) =>
+{
+    return Results.Ok(await wialon.SearchUnitsAsync(query, token));
+});
+
+app.MapGet("/api/wialon/billing-plans", async (string? token, WialonService wialon) =>
+{
+    return Results.Ok(await wialon.GetBillingPlansAsync(token));
+});
+
+app.MapGet("/api/wialon/hw-types", async (string? token, WialonService wialon) =>
+{
+    return Results.Ok(await wialon.GetHardwareTypesAsync(token));
+});
+
+app.MapPost("/api/wialon/unit", async (WialonUnitCreateRequest req, string? token, WialonService wialon) =>
+{
+    var success = await wialon.CreateUnitAsync(req.Name, req.HwTypeId, req.Imei, token);
+    return success ? Results.Ok() : Results.BadRequest("Failed to create unit.");
+});
+
+app.MapPost("/api/wialon/wizard/account", async (WialonAccountWizardRequest req, string? token, WialonService wialon) =>
+{
+    var success = await wialon.WizardCreateAccountAsync(req.AccountName, req.BillingPlan, req.UserName, req.Password, token);
+    return success ? Results.Ok() : Results.BadRequest("Failed to complete account creation wizard.");
+});
+
+// Inventory Lookup APIs (restored)
+app.MapGet("/api/inventory/lookup/{iccid}", async (string iccid) =>
 {
     var path = Path.Combine(app.Environment.ContentRootPath, "Data", "inventory.csv");
-    if (!File.Exists(path)) return Results.NotFound("Inventory file not found.");
-
-    var lines = File.ReadAllLines(path);
+    if (!File.Exists(path)) return Results.NotFound("Inventory data file missing.");
+    var lines = await File.ReadAllLinesAsync(path);
     foreach (var line in lines.Skip(1))
     {
         var parts = line.Split(',');
-        if (parts.Length >= 2 && parts[1].Trim() == iccid)
-        {
-            return Results.Ok(new { 
-                MobileNumber = parts[0].Trim(),
-                SimNo = parts[1].Trim(),
-                SimImsi = parts.Length > 2 ? parts[2].Trim() : ""
-            });
-        }
+        if (parts.Length >= 6 && parts[4].Trim() == iccid)
+            return Results.Ok(new { ItemCode = parts[0], Make = parts[1], Model = parts[2], SerialNumber = parts[3], Iccid = parts[4], Pin = parts[5] });
     }
-    return Results.NotFound("SIM not found in inventory.");
-})
-.WithName("LookupSim")
-.WithOpenApi();
+    return Results.NotFound();
+});
 
-app.MapGet("/api/inventory/search", (string query) =>
+app.MapGet("/api/inventory/search", async (string query) =>
 {
     var path = Path.Combine(app.Environment.ContentRootPath, "Data", "inventory.csv");
-    if (!File.Exists(path)) return Results.NotFound("Inventory file not found.");
-
-    var lines = File.ReadAllLines(path);
+    if (!File.Exists(path)) return Results.NotFound();
     var results = new List<object>();
-    
-    // Clean query: remove spaces, dashes, plus signs for a "digits-first" search
-    var q = new string(query.Where(c => char.IsLetterOrDigit(c)).ToArray()).ToLower();
-
+    var lines = await File.ReadAllLinesAsync(path);
     foreach (var line in lines.Skip(1))
     {
-        var parts = line.Split(',');
-        if (parts.Length >= 2)
+        if (line.Contains(query, StringComparison.OrdinalIgnoreCase))
         {
-            var mobile = parts[0].Trim();
-            var sim = parts[1].Trim();
-            
-            // Clean the numbers for comparison
-            var mobileClean = new string(mobile.Where(c => char.IsLetterOrDigit(c)).ToArray()).ToLower();
-            var simClean = new string(sim.Where(c => char.IsLetterOrDigit(c)).ToArray()).ToLower();
-
-            if (mobileClean.Contains(q) || simClean.Contains(q))
-            {
-                results.Add(new { 
-                    MobileNumber = mobile,
-                    SimNo = sim,
-                    SimImsi = parts.Length > 2 ? parts[2].Trim() : ""
-                });
-            }
+            var parts = line.Split(',');
+            if (parts.Length >= 6) results.Add(new { ItemCode = parts[0], Make = parts[1], Model = parts[2], SerialNumber = parts[3], Iccid = parts[4], Pin = parts[5] });
         }
     }
     return Results.Ok(results);
-})
-.WithName("SearchInventory")
-.WithOpenApi();
+});
 
 app.Run();
 
+public record WialonUnitCreateRequest(string Name, string HwTypeId, string Imei);
+public record WialonAccountWizardRequest(string AccountName, string BillingPlan, string UserName, string Password);

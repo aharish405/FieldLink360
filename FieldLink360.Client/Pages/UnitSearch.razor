@@ -1,0 +1,181 @@
+@page "/units"
+@inject WialonIntegrationService WialonService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-0 mt-md-4 px-2 px-md-4">
+    <div class="d-flex align-center justify-space-between mb-6 mt-4">
+        <div>
+            <MudText Typo="Typo.h4" Style="font-weight: 800;">Wialon Units</MudText>
+            <MudText Typo="Typo.caption" Style="opacity: 0.6;">Direct integration with Wialon Remote API</MudText>
+        </div>
+        <div class="d-flex gap-4">
+            <WialonAuthStatus OnStatusChanged="StateHasChanged" />
+        </div>
+    </div>
+
+    <MudPaper Class="pa-6 mb-8 shadow-lg" Style="border-radius: 20px; border: 1px solid var(--mud-palette-divider);">
+        <MudGrid Spacing="3" Class="align-center">
+            <MudItem xs="12" md="9">
+                <MudTextField @bind-Value="_searchQuery" Label="Search Units" 
+                    Placeholder="Enter unit name or IMEI..." 
+                    Variant="Variant.Outlined" Adornment="Adornment.Start" 
+                    AdornmentIcon="@Icons.Material.Filled.Search" 
+                    OnKeyDown="@(async e => { if(e.Key == "Enter") await Search(); })"
+                    Clearable="true" HelperText="Searches for unique ID (IMEI) or sys_name in Wialon" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                    FullWidth="true" Size="Size.Large" OnClick="Search"
+                    Disabled="_isSearching" Class="py-3 shadow-md"
+                    Style="border-radius: 12px; font-weight: 700;">
+                    @if (_isSearching)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Searching...</span>
+                    }
+                    else
+                    {
+                        <span>SEARCH WIALON</span>
+                    }
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_results != null)
+    {
+        <MudDataGrid Items="@_results" Hover="true" Elevation="4" Style="border-radius: 20px; overflow: hidden;" Class="mt-4" Bordered="false" Striped="true">
+            <Columns>
+                <HierarchyColumn T="WialonUnit" />
+                <PropertyColumn Property="x => x.Name" Title="Unit Name">
+                    <CellTemplate>
+                        <div class="d-flex align-center">
+                            <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Router" Size="Size.Small" />
+                            </MudAvatar>
+                            <MudText Typo="Typo.body1"><b>@context.Item.Name</b></MudText>
+                        </div>
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="x => x.UniqueId" Title="IMEI" />
+                <PropertyColumn Property="x => x.ConnectionStatus" Title="Status">
+                     <CellTemplate>
+                        <MudChip T="string" Size="Size.Small" Color="@(context.Item.ConnectionStatus == "Online" ? Color.Success : Color.Default)" Variant="Variant.Filled">
+                            @context.Item.ConnectionStatus
+                        </MudChip>
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="x => x.LastMessage" Title="Last Activity" />
+                <TemplateColumn Title="Actions" CellClass="text-right">
+                    <CellTemplate>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Info" Href="@($"/scanner?imei={context.Item.UniqueId}")"
+                            Style="border-radius: 8px;">Onboard</MudButton>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <ChildRowContent>
+                <MudCard Elevation="0" Class="ma-4 px-6 py-4" Style="background: rgba(var(--mud-palette-primary-rgb), 0.05); border-radius: 16px;">
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">COMMUNICATION</MudText>
+                            <MudText Typo="Typo.body2"><b>Phone:</b> @(context.Item.PhoneNumber ?? "N/A")</MudText>
+                            <MudText Typo="Typo.body2"><b>IMSI:</b> @(context.Item.IMSI ?? "N/A")</MudText>
+                            <MudText Typo="Typo.body2"><b>ICCID:</b> @(context.Item.ICCID ?? "N/A")</MudText>
+                            <MudText Typo="Typo.body2"><b>Hardware:</b> @(context.Item.HardwareType ?? "Standard")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">DEVICE INFO</MudText>
+                            <MudText Typo="Typo.body2"><b>Model:</b> @(context.Item.Model ?? "Unknown")</MudText>
+                            <MudText Typo="Typo.body2"><b>VIN:</b> @(context.Item.VIN ?? "N/A")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">LOCATION</MudText>
+                            <MudText Typo="Typo.body2"><b>Lat:</b> @context.Item.Latitude</MudText>
+                            <MudText Typo="Typo.body2"><b>Lon:</b> @context.Item.Longitude</MudText>
+                            @if (context.Item.Latitude.HasValue && context.Item.Longitude.HasValue)
+                            {
+                                <MudLink Href="@($"https://www.google.com/maps/search/?api=1&query={context.Item.Latitude},{context.Item.Longitude}")" 
+                                    Target="_blank" Color="Color.Info" Underline="Underline.Always" Typo="Typo.caption">
+                                    View on Google Maps
+                                </MudLink>
+                            }
+                        </MudItem>
+                    </MudGrid>
+                    @if (context.Item.CustomFields.Any())
+                    {
+                        <div class="mt-4 pt-4" style="border-top: 1px solid rgba(0,0,0,0.1);">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">CUSTOM PROPERTIES</MudText>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var field in context.Item.CustomFields)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                                        <b>@field.Key:</b> @field.Value
+                                    </MudChip>
+                                }
+                            </div>
+                        </div>
+                    }
+                </MudCard>
+            </ChildRowContent>
+            <NoRecordsContent>
+                <div class="pa-8 text-center text-muted">
+                    <MudIcon Icon="@Icons.Material.Outlined.SentimentDissatisfied" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.body1">No units found matching your search.</MudText>
+                </div>
+            </NoRecordsContent>
+        </MudDataGrid>
+    }
+    else if (!_isSearching)
+    {
+        <div class="pa-12 text-center" style="opacity: 0.5;">
+            <MudIcon Icon="@Icons.Material.Outlined.ManageSearch" Size="Size.Large" Style="font-size: 5rem;" />
+            <MudText Typo="Typo.h6">Enter a search term above to fetch units from Wialon</MudText>
+        </div>
+    }
+</MudContainer>
+
+@inject IJSRuntime JS
+@inject IConfiguration Config
+
+@code {
+    private string _searchQuery = string.Empty;
+    private bool _isSearching = false;
+    private List<WialonUnit>? _results;
+
+    private async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            Snackbar.Add("Please enter a search term.", Severity.Warning);
+            return;
+        }
+
+        _isSearching = true;
+        _results = null;
+        StateHasChanged();
+
+        try
+        {
+            _results = await WialonService.SearchWialonUnits(_searchQuery);
+            if (_results.Count == 0)
+            {
+                Snackbar.Add("No results found in Wialon.", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add($"Found {_results.Count} units.", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error connecting to Wialon: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSearching = false;
+        }
+    }
+
+    }
+}

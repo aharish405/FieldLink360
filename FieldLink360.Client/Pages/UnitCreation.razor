@@ -1,0 +1,131 @@
+@page "/wialon/unit-creation"
+@inject FieldLink360.Client.Services.WialonIntegrationService WialonService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <div class="d-flex align-center justify-space-between mb-8">
+        <div>
+            <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 800;">UNIT PROVISIONING</MudText>
+            <MudText Typo="Typo.caption" Style="opacity: 0.6;">Initialize new tracking units in Wialon</MudText>
+        </div>
+        <WialonAuthStatus OnStatusChanged="OnAuthChanged" />
+    </div>
+
+    @if (string.IsNullOrEmpty(WialonService.UserToken))
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
+            Authorization required to provision units.
+        </MudAlert>
+    }
+
+    <MudCard Elevation="4" Class="pa-6" Style="border-radius: 16px; background: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);">
+        <MudCardContent>
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_unitName" Label="Unit Name" 
+                        Variant="Variant.Outlined" FullWidth Adornment="Adornment.Start" 
+                        AdornmentIcon="@Icons.Material.Filled.LocalShipping" Placeholder="e.g. TRUCK-001" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_imei" Label="IMEI / Unique ID" 
+                        Variant="Variant.Outlined" FullWidth Adornment="Adornment.Start" 
+                        AdornmentIcon="@Icons.Material.Filled.Fingerprint" Placeholder="15-digit code" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="string" @bind-Value="_hwTypeId" Label="Hardware Type" Variant="Variant.Outlined">
+                        @foreach (var type in _hwTypes)
+                        {
+                            <MudSelectItem Value="@type.Id.ToString()">@type.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" Class="d-flex justify-end mt-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" 
+                        StartIcon="@Icons.Material.Filled.RocketLaunch" Size="Size.Large"
+                        Disabled="@(string.IsNullOrEmpty(_unitName) || string.IsNullOrEmpty(_imei) || string.IsNullOrEmpty(WialonService.UserToken) || _isProcessing)"
+                        OnClick="CreateUnit" Style="border-radius: 12px; min-width: 200px; padding: 12px 24px;">
+                        @(_isProcessing ? "PROVISIONING..." : "PROVISION UNIT")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    @if (!string.IsNullOrEmpty(_lastCreatedName))
+    {
+        <MudCard Elevation="2" Class="mt-6 pa-4" Style="border-left: 6px solid #4CAF50; border-radius: 8px;">
+            <div class="d-flex align-center gap-4">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                <div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: bold;">Unit Provisioned Successfully</MudText>
+                    <MudText Typo="Typo.body2"><b>Name:</b> @_lastCreatedName | <b>IMEI:</b> @_lastCreatedImei</MudText>
+                </div>
+            </div>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    private string _unitName = string.Empty;
+    private string _imei = string.Empty;
+    private string _hwTypeId = "1";
+    private bool _isProcessing = false;
+    private string? _lastCreatedName;
+    private string? _lastCreatedImei;
+    private List<WialonHardwareType> _hwTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(WialonService.UserToken))
+        {
+            await LoadHwTypes();
+        }
+    }
+
+    private async Task OnAuthChanged()
+    {
+        if (!string.IsNullOrEmpty(WialonService.UserToken))
+        {
+            await LoadHwTypes();
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadHwTypes()
+    {
+        _hwTypes = await WialonService.GetHardwareTypes();
+        if (_hwTypes.Any() && string.IsNullOrEmpty(_hwTypeId))
+        {
+            _hwTypeId = _hwTypes.First().Id.ToString();
+        }
+    }
+
+    private async Task CreateUnit()
+    {
+        _isProcessing = true;
+        try
+        {
+            var success = await WialonService.CreateWialonUnit(_unitName, _hwTypeId, _imei);
+            if (success)
+            {
+                Snackbar.Add($"Unit '{_unitName}' provisioned successfully!", Severity.Success);
+                _lastCreatedName = _unitName;
+                _lastCreatedImei = _imei;
+                _unitName = string.Empty;
+                _imei = string.Empty;
+            }
+            else
+            {
+                Snackbar.Add("Failed to provision unit. Check connection and permissions.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+}

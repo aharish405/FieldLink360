@@ -1058,8 +1058,9 @@ C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\FieldLin
 C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\refint\FieldLink360.Client.dll
 C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\FieldLink360.Client.pdb
 C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\ref\FieldLink360.Client.dll
-C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\756o9kut9q-82zp6pj38j.gz
-C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\2o2czc5soi-inuxvkrpbd.gz
-C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\depm7qll0m-ntxw8lk73v.gz
-C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\mmbcadbje7-3gkw051zfi.gz
-C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\h8h0f0ofs9-kh3ueu4jvn.gz
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\FieldLink360.Client.sourcelink.json
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\756o9kut9q-fkkofqb2e8.gz
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\2o2czc5soi-8myxjkjolv.gz
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\depm7qll0m-lfxyjwouax.gz
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\mmbcadbje7-ltr4niz0i3.gz
+C:\Users\ahari\source\FieldLink360\FieldLink360.Client\obj\Debug\net8.0\compressed\h8h0f0ofs9-gl2p57dw85.gz

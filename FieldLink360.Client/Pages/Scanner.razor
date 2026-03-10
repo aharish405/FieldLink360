@@ -3,6 +3,7 @@
 @inject ISnackbar Snackbar
 @inject WialonIntegrationService WialonService
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-0 mt-md-4 px-2 px-md-4">
     <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4 mb-md-6 mt-4">Scan Device</MudText>
@@ -119,6 +120,20 @@
     private int _scanAttempts = 0;
 
     private enum WorkflowStep { IMEI, SIM, Complete }
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var imei = query.Get("imei");
+
+        if (!string.IsNullOrEmpty(imei))
+        {
+            _model.IMEI = imei;
+            _workflowStep = WorkflowStep.SIM;
+            Snackbar.Add($"Loaded unit info for IMEI: {imei}", Severity.Info);
+        }
+    }
 
     private int _currentStepNum => _workflowStep switch {
         WorkflowStep.IMEI => 1,

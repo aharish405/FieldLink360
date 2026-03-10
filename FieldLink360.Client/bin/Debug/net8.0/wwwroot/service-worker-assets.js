@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "9VJ2VZhL",
+  "version": "X8JeOO+4",
   "assets": [
     {
       "hash": "sha256-Ly3Two42by/5na2vJxkix/WgpOVJ+bXll2p11M4lGBE=",
@@ -18,19 +18,19 @@ self.assetsManifest = {
       "url": "_content/MudBlazor/MudBlazor.min.js.map"
     },
     {
-      "hash": "sha256-gzNFExsZek4P+xMbSTd5QE2IQucqpCRsrnKY5zG4bwM=",
+      "hash": "sha256-J2ti2u+GP/ao/ozCFI5oNgr2Vdc+dZ4ICnkkjFHHzz0=",
       "url": "_framework/FieldLink360.Client.pdb"
     },
     {
-      "hash": "sha256-xRBMGxJp8j2aMIochF6GMTv9B2gZt0RN+SX8mDRki94=",
+      "hash": "sha256-wVAHz2MF6i4v6TmKyqewhuNozXezH9XrdaP9fMSJ4iU=",
       "url": "_framework/FieldLink360.Client.wasm"
     },
     {
-      "hash": "sha256-kqfeA/0j5eiy1Q6g0JfBi85+nzTSr4caft2utpB6AYY=",
+      "hash": "sha256-gN9Wz7G4DX7H/8MjKFN2jwtDr/WV+DY24nUrF85C5Mc=",
       "url": "_framework/FieldLink360.Shared.pdb"
     },
     {
-      "hash": "sha256-QMj8Xe+IlCmhXK2OhP0NFdq6iAK6lCsz5gQ1AZxPbpE=",
+      "hash": "sha256-H8V2Xo7yRtpqDzXtTSxPD5qbbYurijRQPfbIwyTtvg8=",
       "url": "_framework/FieldLink360.Shared.wasm"
     },
     {
@@ -802,7 +802,7 @@ self.assetsManifest = {
       "url": "_framework/WindowsBase.wasm"
     },
     {
-      "hash": "sha256-KHOBMaI7NXFEb0cXSJ601MX9ZkirzyZ658DP/7CmIfQ=",
+      "hash": "sha256-nLWL7vtvQt2k7lsQwHh05kjBGbMvkx92UjR5LD/2NjQ=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -882,7 +882,7 @@ self.assetsManifest = {
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-uI95NdD+NCs5SpYh20l5CawqlN1UUj4zOPtSXQBY6Hw=",
+      "hash": "sha256-UQFzMzh4U03ikKYrCJw33WWnrAlZUz2rAH235XjK0BU=",
       "url": "index.html"
     },
     {
@@ -892,6 +892,10 @@ self.assetsManifest = {
     {
       "hash": "sha256-enKgCMkYmCpfEcmg6Annbmc40VZ/A6aYYSQjZfVn2cU=",
       "url": "sample-data/weather.json"
+    },
+    {
+      "hash": "sha256-FXOT3K8c8dlgZBRkESk8u0eXOW+tPrEK5xfVrwa6/R4=",
+      "url": "wialon-callback.html"
     }
   ]
 };

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FieldLink360.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e163b8eedb8476f41a3b410522e492d6eb0a0d8")]
 [assembly: System.Reflection.AssemblyProductAttribute("FieldLink360.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FieldLink360.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
