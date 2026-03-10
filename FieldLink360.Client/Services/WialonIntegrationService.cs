@@ -89,6 +89,28 @@ public class WialonIntegrationService
         catch { return new List<WialonHardwareType>(); }
     }
 
+    public async Task<List<string?>> GetBusinessSpheres()
+    {
+        try
+        {
+            var url = $"/api/wialon/business-spheres";
+            if (!string.IsNullOrEmpty(UserToken)) url += $"?token={UserToken}";
+            return await _httpClient.GetFromJsonAsync<List<string?>>(url) ?? new List<string?>();
+        }
+        catch { return new List<string?>(); }
+    }
+
+    public async Task<List<WialonUser>> GetWialonUsers(string query = "")
+    {
+        try
+        {
+            var url = $"/api/wialon/users?query={query}";
+            if (!string.IsNullOrEmpty(UserToken)) url += $"&token={UserToken}";
+            return await _httpClient.GetFromJsonAsync<List<WialonUser>>(url) ?? new List<WialonUser>();
+        }
+        catch { return new List<WialonUser>(); }
+    }
+
     public async Task<bool> CreateWialonUnit(string name, string hwTypeId, string imei)
     {
         try
@@ -101,16 +123,20 @@ public class WialonIntegrationService
         catch { return false; }
     }
 
-    public async Task<bool> RunAccountWizard(string accountName, string plan, string user, string pass)
+    public async Task<WialonWizardResult> RunAccountWizard(string accountName, string plan, string user, string pass, string sphere, int mu)
     {
         try
         {
             var url = $"/api/wialon/wizard/account";
             if (!string.IsNullOrEmpty(UserToken)) url += $"?token={UserToken}";
-            var response = await _httpClient.PostAsJsonAsync(url, new { AccountName = accountName, BillingPlan = plan, UserName = user, Password = pass });
-            return response.IsSuccessStatusCode;
+            var response = await _httpClient.PostAsJsonAsync(url, new { AccountName = accountName, BillingPlan = plan, UserName = user, Password = pass, Sphere = sphere, MeasurementSystem = mu });
+            
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<WialonWizardResult>() ?? new WialonWizardResult { Success = true };
+            
+            return await response.Content.ReadFromJsonAsync<WialonWizardResult>() ?? new WialonWizardResult { Success = false, ErrorMessage = "Unknown error occurred" };
         }
-        catch { return false; }
+        catch (Exception ex) { return new WialonWizardResult { Success = false, ErrorMessage = ex.Message }; }
     }
 
     public async Task<bool> OnboardToWialon(DeviceOnboardingModel model)

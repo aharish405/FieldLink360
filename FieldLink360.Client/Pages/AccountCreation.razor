@@ -38,17 +38,32 @@
             @if (_currentStep == 1)
             {
                 <MudGrid>
-                    <MudItem xs="12">
+                    <MudItem xs="12" md="6">
                         <MudTextField @bind-Value="_accountName" Label="Account / Resource Name" 
                             Variant="Variant.Outlined" FullWidth HelperText="Min 4 characters" />
                     </MudItem>
-                    <MudItem xs="12">
-                        <MudSelect T="string" @bind-Value="_selectedPlan" Label="Billing Plan" Variant="Variant.Outlined"
-                            HelperText="Select the service package for this account">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="_selectedPlan" Label="Billing Plan" Variant="Variant.Outlined">
                             @foreach (var plan in _billingPlans)
                             {
                                 <MudSelectItem Value="@plan">@plan</MudSelectItem>
                             }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="string" @bind-Value="_selectedSphere" Label="Business Sphere" Variant="Variant.Outlined">
+                            @foreach (var sphere in _spheres)
+                            {
+                                <MudSelectItem Value="@sphere">@sphere</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int" @bind-Value="_mu" Label="Measurement System" Variant="Variant.Outlined">
+                            <MudSelectItem Value="0">Metric (SI)</MudSelectItem>
+                            <MudSelectItem Value="1">U.S. Customary</MudSelectItem>
+                            <MudSelectItem Value="2">Imperial</MudSelectItem>
+                            <MudSelectItem Value="3">Metric with Gallons</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                 </MudGrid>
@@ -58,31 +73,47 @@
                 <MudGrid>
                     <MudItem xs="12">
                         <MudTextField @bind-Value="_adminUser" Label="Admin Username" 
-                            Variant="Variant.Outlined" FullWidth />
+                            Variant="Variant.Outlined" FullWidth HelperText="The primary user for this account" />
                     </MudItem>
-                    <MudItem xs="12">
+                    <MudItem xs="12" md="6">
                         <MudTextField @bind-Value="_adminPass" Label="Admin Password" 
+                            InputType="InputType.Password" Variant="Variant.Outlined" FullWidth />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_confirmPass" Label="Confirm Password" 
                             InputType="InputType.Password" Variant="Variant.Outlined" FullWidth />
                     </MudItem>
                 </MudGrid>
             }
             else if (_currentStep == 3)
             {
-                <div class="d-flex flex-column gap-4 pa-4 bg-light rounded-lg" style="background: rgba(0,0,0,0.02)">
-                    <MudText Typo="Typo.h6">Summary</MudText>
+                <div class="d-flex flex-column gap-4 pa-4 rounded-lg" style="background: rgba(0,0,0,0.02)">
+                    <MudText Typo="Typo.h6">Review Configuration</MudText>
                     <MudDivider />
-                    <div class="d-flex justify-space-between">
-                        <MudText Typo="Typo.body2" Color="Color.Surface">Account Name:</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_accountName</MudText>
-                    </div>
-                    <div class="d-flex justify-space-between">
-                        <MudText Typo="Typo.body2" Color="Color.Surface">Billing Plan:</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_selectedPlan</MudText>
-                    </div>
-                    <div class="d-flex justify-space-between">
-                        <MudText Typo="Typo.body2" Color="Color.Surface">Admin User:</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight: bold;">@_adminUser</MudText>
-                    </div>
+                    <MudSimpleTable Style="background: transparent;" Elevation="0">
+                        <tbody>
+                            <tr>
+                                <td><MudText Typo="Typo.body2">Account Name</MudText></td>
+                                <td><b>@_accountName</b></td>
+                            </tr>
+                            <tr>
+                                <td><MudText Typo="Typo.body2">Billing Plan</MudText></td>
+                                <td><b>@_selectedPlan</b></td>
+                            </tr>
+                            <tr>
+                                <td><MudText Typo="Typo.body2">Business Sphere</MudText></td>
+                                <td><b>@_selectedSphere</b></td>
+                            </tr>
+                            <tr>
+                                <td><MudText Typo="Typo.body2">Measurement</MudText></td>
+                                <td><b>@(GetMuName(_mu))</b></td>
+                            </tr>
+                            <tr>
+                                <td><MudText Typo="Typo.body2">Admin User</MudText></td>
+                                <td><b>@_adminUser</b></td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
                 </div>
             }
         </MudCardContent>
@@ -100,8 +131,8 @@
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Finish" 
                            Disabled="@(_isProcessing || string.IsNullOrEmpty(WialonService.UserToken))" 
-                           Style="border-radius: 8px; min-width: 150px;">
-                    @(_isProcessing ? "PROCESSING..." : "CREATE ACCOUNT")
+                           Style="border-radius: 8px; min-width: 180px;">
+                    @(_isProcessing ? "CREATING..." : "FINISH & CREATE")
                 </MudButton>
             }
         </MudCardActions>
@@ -115,17 +146,21 @@
     // Step 1
     private string _accountName = string.Empty;
     private string _selectedPlan = "Standard";
+    private string _selectedSphere = "General fleets";
+    private int _mu = 0;
     private List<string> _billingPlans = new() { "Standard", "Basic", "Advanced", "Enterprise" };
+    private List<string> _spheres = new() { "General fleets", "Passenger transportation", "Agriculture", "Construction" };
 
     // Step 2
     private string _adminUser = string.Empty;
     private string _adminPass = string.Empty;
+    private string _confirmPass = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrEmpty(WialonService.UserToken))
         {
-            await LoadPlans();
+            await LoadData();
         }
     }
 
@@ -133,12 +168,12 @@
     {
         if (!string.IsNullOrEmpty(WialonService.UserToken))
         {
-            await LoadPlans();
+            await LoadData();
         }
         StateHasChanged();
     }
 
-    private async Task LoadPlans()
+    private async Task LoadData()
     {
         var plans = await WialonService.GetBillingPlans();
         if (plans.Any())
@@ -146,12 +181,27 @@
             _billingPlans = plans;
             _selectedPlan = _billingPlans.First();
         }
+
+        var spheres = await WialonService.GetBusinessSpheres();
+        if (spheres.Any())
+        {
+            _spheres = spheres.Where(s => s != null).Select(s => s!).ToList();
+            _selectedSphere = _spheres.First();
+        }
     }
+
+    private string GetMuName(int mu) => mu switch
+    {
+        1 => "U.S. Customary",
+        2 => "Imperial",
+        3 => "Metric + Gal",
+        _ => "Metric (SI)"
+    };
 
     private bool IsStepValid()
     {
         if (_currentStep == 1) return _accountName.Length >= 4 && !string.IsNullOrEmpty(_selectedPlan);
-        if (_currentStep == 2) return !string.IsNullOrEmpty(_adminUser) && !string.IsNullOrEmpty(_adminPass);
+        if (_currentStep == 2) return !string.IsNullOrEmpty(_adminUser) && !string.IsNullOrEmpty(_adminPass) && _adminPass == _confirmPass;
         return true;
     }
 
@@ -163,23 +213,24 @@
         _isProcessing = true;
         try
         {
-            var success = await WialonService.RunAccountWizard(_accountName, _selectedPlan, _adminUser, _adminPass);
-            if (success)
+            var result = await WialonService.RunAccountWizard(_accountName, _selectedPlan, _adminUser, _adminPass, _selectedSphere, _mu);
+            if (result.Success)
             {
                 Snackbar.Add("Account wizard completed successfully!", Severity.Success);
                 _currentStep = 1;
                 _accountName = "";
                 _adminUser = "";
                 _adminPass = "";
+                _confirmPass = "";
             }
             else
             {
-                Snackbar.Add("Wizard failed. Please check your permissions and parameters.", Severity.Error);
+                Snackbar.Add($"Wizard failed: {result.ErrorMessage}", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add($"System Error: {ex.Message}", Severity.Error);
         }
         finally
         {

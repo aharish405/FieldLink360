@@ -65,6 +65,16 @@ app.MapGet("/api/wialon/hw-types", async (string? token, WialonService wialon) =
     return Results.Ok(await wialon.GetHardwareTypesAsync(token));
 });
 
+app.MapGet("/api/wialon/business-spheres", async (string? token, WialonService wialon) =>
+{
+    return Results.Ok(await wialon.GetBusinessSpheresAsync(token));
+});
+
+app.MapGet("/api/wialon/users", async (string? query, string? token, WialonService wialon) =>
+{
+    return Results.Ok(await wialon.SearchUsersAsync(query ?? "", token));
+});
+
 app.MapPost("/api/wialon/unit", async (WialonUnitCreateRequest req, string? token, WialonService wialon) =>
 {
     var success = await wialon.CreateUnitAsync(req.Name, req.HwTypeId, req.Imei, token);
@@ -73,8 +83,8 @@ app.MapPost("/api/wialon/unit", async (WialonUnitCreateRequest req, string? toke
 
 app.MapPost("/api/wialon/wizard/account", async (WialonAccountWizardRequest req, string? token, WialonService wialon) =>
 {
-    var success = await wialon.WizardCreateAccountAsync(req.AccountName, req.BillingPlan, req.UserName, req.Password, token);
-    return success ? Results.Ok() : Results.BadRequest("Failed to complete account creation wizard.");
+    var result = await wialon.WizardCreateAccountAsync(req.AccountName, req.BillingPlan, req.UserName, req.Password, req.Sphere, req.MeasurementSystem, token);
+    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
 });
 
 // Inventory Lookup APIs (restored)
@@ -112,4 +122,4 @@ app.MapGet("/api/inventory/search", async (string query) =>
 app.Run();
 
 public record WialonUnitCreateRequest(string Name, string HwTypeId, string Imei);
-public record WialonAccountWizardRequest(string AccountName, string BillingPlan, string UserName, string Password);
+public record WialonAccountWizardRequest(string AccountName, string BillingPlan, string UserName, string Password, string Sphere, int MeasurementSystem);

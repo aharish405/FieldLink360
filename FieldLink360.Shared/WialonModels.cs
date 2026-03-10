@@ -105,3 +105,15 @@ public class WialonMessageParams
     public string? Imsi { get; set; }
     public string? Iccid { get; set; }
 }
+
+public class WialonUser
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class WialonWizardResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+}
